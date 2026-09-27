@@ -43,7 +43,25 @@ pipeline {
             }
         }
 
-        stage('Login to ECR') {
+        stage('AWS Debug') {
+            steps {
+                 sh '''
+                     echo "AWS Region:"
+                     echo ${AWS_REGION}
+
+                     echo "AWS Account:"
+                     aws sts get-caller-identity
+
+                     echo "ECR repositories:"
+                     aws ecr describe-repositories \
+                     --region ${AWS_REGION}
+
+                     echo "Target repository:"
+                     echo ${ECR_REPO}
+                 '''
+             }
+        }
+         stage('Login to ECR') {
             steps {
                 sh '''
                     aws ecr get-login-password --region ap-south-1 | \
