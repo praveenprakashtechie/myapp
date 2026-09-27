@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'ap-south-'
+        AWS_ACCOUNT_ID = ''
+        ECR_REPOSITORY = 'myapp'
+        ECR_REGISTRY = ".dkr.ecr.ap-south-2.amazonaws.com"
+        IMAGE_NAME = "${ECR_REGISTRY}/${ECR_REPOSITORY}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                '''
+            }
+        }
+
+        stage('Test Container') {
+            steps {
+                sh '''
+                    docker run -d \
+                    --name test-container \
+                    -p 5001:5000 \
+                    ${IMAGE_NAME}:${BUILD_NUMBER}
+
+                    sleep 5
+
+                    curl -f http://localhost:5001/health
+
+                    docker stop test-container
+                    docker rm test-container
+                '''
+            }
+        }
+
+        stage('Login to ECR') {
+            steps {
+                sh '''
+                    aws ecr get-login-password --region ap-south-2 | \
+                    docker login \
+                    --username AWS \
+                    --password-stdin ${ECR_REGISTRY}
+                '''
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                sh '''
+                    docker push ${IMAGE_NAME}:${BUILD_NUMBER}
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker image prune -f || true'
+        }
+    }
+}
