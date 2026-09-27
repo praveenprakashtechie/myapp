@@ -4,7 +4,7 @@ pipeline {
     environment {
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '690084475612'
-        ECR_REPOSITORY = 'myapp'
+        ECR_REPOSITORY = 'registryimage-myapp'
         ECR_REGISTRY = "690084475612.dkr.ecr.ap-south-1.amazonaws.com"
         IMAGE_NAME = "${ECR_REGISTRY}/${ECR_REPOSITORY}"
     }
